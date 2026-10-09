@@ -345,6 +345,37 @@
         color: var(--muted);
         margin-right: 8px;
       }
+      .diag {
+        margin-top: 14px;
+        padding: 12px 14px;
+        border: 2px solid var(--amber);
+        border-radius: 4px;
+        background: #fff;
+      }
+      .diag[data-level="err"] {
+        border-color: var(--red);
+      }
+      .diag b {
+        font: 700 20px/1.2 var(--disp);
+        letter-spacing: 0.02em;
+      }
+      .diag p {
+        margin: 6px 0 0;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .diag ol {
+        margin: 8px 0 0;
+        padding-left: 20px;
+        font-size: 14px;
+      }
+      .diag code {
+        font-size: 12px;
+        word-break: break-all;
+      }
+      .pill[title] {
+        cursor: help;
+      }
       dialog {
         border: 2px solid var(--ink);
         border-radius: 6px;
@@ -439,6 +470,11 @@
           <div class="state">
             <b id="engine">Menunggu data</b>
             <p id="engineSub">Sambungkan ke server untuk mulai.</p>
+          </div>
+          <div class="diag" id="diag" hidden>
+            <b id="diagTitle"></b>
+            <ol id="diagList"></ol>
+            <p id="diagFacts"></p>
           </div>
           <div class="chips" id="flags"></div>
         </section>
@@ -632,10 +668,14 @@
       drawGauge(0);
 
       /* ---------- ui ---------- */
-      function pill(id, cls, text) {
+      function pill(id, cls, text, title) {
         const e = $(id);
         e.className = "pill " + cls;
         e.lastChild.nodeValue = text;
+        if (title !== undefined) {
+          if (title) e.title = title;
+          else e.removeAttribute("title");
+        }
       }
       const msg = (t) => ($("msg").textContent = t);
       function log(m) {
@@ -716,6 +756,191 @@
         $("fm").textContent = FAULT[fc] || "Kode tidak dikenal";
       }
 
+      /* ---------- diagnosa ---------- */
+      //  - elStatus  : elemen badge/label status (tooltip diisi lewat atribut title)
+
+      function k27Diagnose(state, espOnline) {
+        const d = state && state.d;
+        const R = (level, title, causes = [], facts = {}) => ({
+          level,
+          title,
+          causes,
+          facts,
+        });
+
+        if (espOnline === false)
+          return R("err", "ESP32 offline", [
+            "ESP32 tidak mendapat daya / reset terus",
+            "WiFi/hotspot tidak tersedia atau SSID/password salah",
+            'Kredensial MQTT atau broker salah (lihat Serial Monitor: "MQTT gagal, rc=...")',
+          ]);
+        if (state && state.ok) return R("ok", "K27 terhubung");
+        if (!d)
+          return R("warn", "Firmware ESP32 lama (tanpa data diagnosa)", [
+            "Upload k27_esp32_mqtt_diag.ino ke ESP32",
+          ]);
+
+        const tx = `GPIO${d.tx}`,
+          rx = `GPIO${d.rx}`;
+        const facts = {
+          kode_error: d.e,
+          byte_diterima: d.n,
+          echo_modul: !!d.echo,
+          echo_pernah: !!d.ee,
+          hex: d.hex,
+          gagal_beruntun: d.st,
+          total_ok: d.okc,
+          total_gagal: d.fail,
+          terakhir_ok_detik_lalu: d.age,
+          baud: d.baud,
+          slave_id: d.id,
+          addr_offset: d.off,
+          uptime_esp_detik: d.up,
+        };
+
+        // hasil scan otomatis (setelah ~8 gagal beruntun) -> diagnosa paling pasti
+        if (d.sb)
+          return R(
+            "err",
+            `Baud salah: panel membalas di ${d.sb} bps`,
+            [
+              `Ubah Serial2.begin()/curBaud di firmware ke ${d.sb}, ATAU ubah baudrate panel ke ${d.baud} (menu 11. Modbus > Baudrate)`,
+            ],
+            facts,
+          );
+        if (d.si)
+          return R(
+            "err",
+            `Slave ID salah: panel membalas di ID ${d.si}`,
+            [
+              `Ubah SLAVE_ID di firmware ke ${d.si}, ATAU ubah Slave Address panel ke ${d.id}`,
+            ],
+            facts,
+          );
+
+        const noPanelReply = [
+          "Panel mati / belum diberi daya",
+          "Menu panel 11. Modbus > Channel masih RS232 (harus RS485)",
+          `Slave ID panel bukan ${d.id}, atau baud panel bukan ${d.baud} (scan otomatis belum menemukan)`,
+          "Kabel A/B ke panel putus atau terbalik (A↔B)",
+          "GND modul RS485 dan panel belum common, atau butuh resistor terminasi 120Ω pada kabel panjang",
+        ];
+        switch (d.e) {
+          case 1:
+            return R(
+              "err",
+              "Tidak ada data sama sekali dari modul RS485",
+              [
+                `Kabel ESP32↔modul: ${tx}(TX) → RXD modul, ${rx}(RX) ← TXD modul. Coba tukar kedua kabel`,
+                "Modul RS485 tidak dapat VCC/GND (cek LED modul) atau level 5V ke pin RX ESP32 (harus 3.3V)",
+                d.ee
+                  ? "Echo modul pernah terdeteksi, jadi kabel ESP32↔modul kemungkinan OK → fokus ke sisi panel"
+                  : "Modul belum pernah menunjukkan echo (normal untuk sebagian modul; bukan bukti kabel rusak)",
+                `Bila board ESP32-WROVER/PSRAM: GPIO16/17 dipakai PSRAM, ganti pin Serial2 (mis. 25/26)`,
+                ...noPanelReply,
+              ],
+              facts,
+            );
+          case 2:
+            return R(
+              "err",
+              "Modul OK (echo terdeteksi), tetapi panel K27 tidak membalas",
+              noPanelReply,
+              facts,
+            );
+          case 3:
+            return R(
+              "warn",
+              `Balasan terpotong/sampah (${d.n} byte: ${d.hex || "-"})`,
+              [
+                "Kabel A/B terbalik atau sambungan longgar",
+                "Noise / tanpa GND common / tanpa terminasi",
+                "Baud hampir cocok tapi beda",
+              ],
+              facts,
+            );
+          case 4:
+            return R(
+              "warn",
+              `Balasan ada tapi CRC salah (${d.n} byte)`,
+              [
+                "Baud/parity berbeda dari panel (harus 8N1)",
+                "A/B terbalik atau noise pada kabel",
+                "Modul RS485 kualitas rendah / daya tidak stabil",
+              ],
+              facts,
+            );
+          case 5:
+            return R(
+              "err",
+              "Balasan dari slave ID lain",
+              [`Samakan SLAVE_ID (${d.id}) dengan Slave Address di panel`],
+              facts,
+            );
+          case 6:
+            return R(
+              "warn",
+              `Panel membalas exception kode ${d.x} (kabel OK)`,
+              [
+                d.x === 2
+                  ? "Alamat register salah: coba ADDR_OFF = 1 di firmware"
+                  : "Cek manual Modbus K27 untuk arti exception",
+              ],
+              facts,
+            );
+          default:
+            return R("warn", "Menunggu data pertama dari ESP32…", [], facts);
+        }
+      }
+
+      let lastState = null,
+        espOnline = null,
+        _sig = "";
+      function renderDiag() {
+        if (!lastState && espOnline !== false) return null;
+        const r = k27Diagnose(lastState, espOnline !== false);
+        const tip = r.causes.length
+          ? "Kemungkinan penyebab:\n" +
+            r.causes.map((c, i) => `${i + 1}. ${c}`).join("\n")
+          : "";
+        if (lastState)
+          pill(
+            "pPanel",
+            r.level === "ok" ? "ok" : r.level === "warn" ? "warn" : "bad",
+            r.level === "ok" ? "Panel K27: terbaca" : "Panel K27: " + r.title,
+            tip,
+          );
+        if (espOnline === false) pill("pDevice", "bad", "ESP32: offline", tip);
+        const box = $("diag");
+        box.hidden = r.level === "ok";
+        box.dataset.level = r.level;
+        $("diagTitle").textContent = r.title;
+        $("diagList").innerHTML = r.causes
+          .map(
+            (c) => `<li>${c.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</li>`,
+          )
+          .join("");
+        const f = r.facts;
+        $("diagFacts").innerHTML =
+          f.kode_error != null
+            ? `Byte diterima: ${f.byte_diterima} · echo modul: ${f.echo_modul ? "ya" : "tidak"} · gagal beruntun: ${f.gagal_beruntun} · ok/gagal: ${f.total_ok}/${f.total_gagal} · balasan: <code>${f.hex || "-"}</code>`
+            : "";
+        const sig = r.level + r.title;
+        if (sig !== _sig) {
+          _sig = sig;
+          const col =
+            r.level === "ok" ? "green" : r.level === "warn" ? "orange" : "red";
+          console.groupCollapsed(
+            `%c[K27] ${r.title}`,
+            `color:${col};font-weight:bold`,
+          );
+          r.causes.forEach((c, i) => console.log(`${i + 1}. ${c}`));
+          if (Object.keys(r.facts).length) console.table(r.facts);
+          console.groupEnd();
+        }
+        return r;
+      }
+
       /* ---------- koneksi ---------- */
       const FIELDS = ["device", "user", "pass", "pin"];
       (function () {
@@ -785,11 +1010,8 @@
             try {
               const o = JSON.parse(s);
               panelOk = !!o.ok;
-              pill(
-                "pPanel",
-                o.ok ? "ok" : "bad",
-                o.ok ? "Panel K27: terbaca" : "Panel K27: tidak menjawab",
-              );
+              lastState = o;
+              const dg = renderDiag();
               lim = { min: o.min || lim.min, max: o.max || lim.max };
               $("lim").textContent = lim.min + "–" + lim.max;
               seen = Date.now();
@@ -798,14 +1020,17 @@
                 upd();
               } else {
                 $("engine").textContent = "Data panel tidak tersedia";
-                $("engineSub").textContent =
-                  "ESP32 tidak mendapat balasan Modbus. Cek kabel RS485, A/B, baud rate, dan slave ID.";
+                $("engineSub").textContent = dg
+                  ? dg.title
+                  : "ESP32 tidak mendapat balasan Modbus.";
               }
             } catch (e) {
               log("Data state tidak valid.");
             }
           } else if (k === "status") {
-            pill("pDevice", s === "online" ? "ok" : "bad", "ESP32: " + s);
+            espOnline = s === "online";
+            pill("pDevice", espOnline ? "ok" : "bad", "ESP32: " + s, "");
+            renderDiag();
           } else if (k === "ack") {
             log("ESP32: " + s);
             msg(s);
