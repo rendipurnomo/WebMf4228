@@ -1,0 +1,913 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Panel kendali K27</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --panel: #e4e8e3;
+        --paper: #f5f6f2;
+        --ink: #18262b;
+        --muted: #5b6b6e;
+        --line: #b9c2bd;
+        --teal: #0e6a68;
+        --teal-d: #0a4f4d;
+        --amber: #d99a00;
+        --red: #b3261e;
+        --green: #2d7a3e;
+        --disp: "Barlow Condensed", "Arial Narrow", Arial, sans-serif;
+        --body:
+          "Barlow", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--panel);
+        color: var(--ink);
+        font: 400 16px/1.5 var(--body);
+      }
+      button,
+      input {
+        font: inherit;
+        color: inherit;
+      }
+      :focus-visible {
+        outline: 3px solid var(--amber);
+        outline-offset: 2px;
+      }
+      .wrap {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 16px;
+      }
+      header {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 0 16px;
+      }
+      h1 {
+        font: 700 32px/1 var(--disp);
+        letter-spacing: 0.01em;
+        margin: 0;
+      }
+      h1 small {
+        display: block;
+        font: 500 15px/1.4 var(--body);
+        color: var(--muted);
+        letter-spacing: 0;
+        margin-top: 4px;
+      }
+      h2 {
+        font: 600 22px/1.2 var(--disp);
+        margin: 0 0 12px;
+        letter-spacing: 0.02em;
+      }
+      .pills {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border: 2px solid var(--ink);
+        border-radius: 4px;
+        background: var(--paper);
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--muted);
+      }
+      .pill.ok .dot {
+        background: var(--green);
+      }
+      .pill.warn .dot {
+        background: var(--amber);
+      }
+      .pill.bad .dot {
+        background: var(--red);
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 12px;
+        justify-content: center;
+      }
+      .chip {
+        padding: 3px 10px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+        background: #fff;
+      }
+      .chip.on {
+        border-color: var(--green);
+        color: var(--green);
+      }
+      .chip.al {
+        border-color: var(--red);
+        color: var(--red);
+      }
+      .panel {
+        background: var(--paper);
+        border: 2px solid var(--ink);
+        border-radius: 6px;
+        padding: 16px;
+      }
+      details.panel {
+        margin-bottom: 16px;
+      }
+      summary {
+        cursor: pointer;
+        font: 600 22px/1.2 var(--disp);
+        letter-spacing: 0.02em;
+      }
+      .form {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        margin-top: 14px;
+      }
+      label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      input[type="text"],
+      input[type="password"] {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid var(--line);
+        border-radius: 4px;
+        background: #fff;
+      }
+      input:focus {
+        border-color: var(--teal);
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-top: 14px;
+      }
+      .hint {
+        color: var(--muted);
+        font-size: 14px;
+        margin: 8px 0 0;
+      }
+      .btn {
+        min-height: 48px;
+        padding: 0 22px;
+        border: 2px solid var(--ink);
+        border-radius: 4px;
+        background: var(--ink);
+        color: #fff;
+        font: 600 18px var(--disp);
+        letter-spacing: 0.03em;
+        cursor: pointer;
+      }
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .btn.start {
+        background: var(--teal);
+        border-color: var(--teal-d);
+      }
+      .btn.stop {
+        background: var(--red);
+        border-color: #7d1912;
+      }
+      .btn.ghost {
+        background: transparent;
+        color: var(--ink);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+        gap: 16px;
+      }
+      @media (max-width: 760px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .gauge {
+        width: 100%;
+        max-width: 420px;
+        margin: 0 auto;
+        display: block;
+      }
+      .gauge text {
+        font-family: var(--disp);
+      }
+      .state {
+        text-align: center;
+        margin-top: 4px;
+      }
+      .state b {
+        font: 700 26px var(--disp);
+        letter-spacing: 0.02em;
+      }
+      .state p {
+        margin: 2px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .cmds {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+      .sp {
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 2px dashed var(--line);
+      }
+      .sprow {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: center;
+      }
+      .sprow .btn {
+        min-width: 78px;
+      }
+      .spval {
+        min-width: 110px;
+        text-align: center;
+      }
+      .spval b {
+        font: 700 44px/1 var(--disp);
+        font-variant-numeric: tabular-nums;
+      }
+      .spval span {
+        display: block;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .msg {
+        text-align: center;
+        margin: 10px 0 0;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .params {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
+      }
+      .par {
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 8px 10px;
+        background: #fff;
+      }
+      .par h3 {
+        margin: 0;
+        font: 600 14px var(--body);
+        color: var(--muted);
+      }
+      .par b {
+        font: 700 30px/1.15 var(--disp);
+        font-variant-numeric: tabular-nums;
+      }
+      .par small {
+        font-size: 13px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .par span {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .stack {
+        display: grid;
+        gap: 16px;
+        margin-top: 16px;
+      }
+      .two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      @media (max-width: 760px) {
+        .two {
+          grid-template-columns: 1fr;
+        }
+      }
+      .fault b {
+        font: 700 44px/1 var(--disp);
+      }
+      .fault p {
+        margin: 4px 0 0;
+      }
+      .log {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        max-height: 200px;
+        overflow: auto;
+        font-size: 14px;
+      }
+      .log li {
+        padding: 6px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .log time {
+        color: var(--muted);
+        margin-right: 8px;
+      }
+      dialog {
+        border: 2px solid var(--ink);
+        border-radius: 6px;
+        padding: 20px;
+        max-width: 360px;
+        background: var(--paper);
+      }
+      dialog::backdrop {
+        background: rgba(24, 38, 43, 0.55);
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .gauge .needle {
+          transition: transform 0.5s ease;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>Panel kendali K27<small id="devline">Belum tersambung</small></h1>
+        <div class="pills">
+          <span class="pill" id="pBroker"
+            ><span class="dot"></span>Server: terputus</span
+          >
+          <span class="pill" id="pDevice"
+            ><span class="dot"></span>ESP32: tidak diketahui</span
+          >
+          <span class="pill" id="pPanel"
+            ><span class="dot"></span>Panel K27: tidak diketahui</span
+          >
+          <span class="pill" id="pAge"
+            ><span class="dot"></span>Data: belum ada</span
+          >
+        </div>
+      </header>
+
+      <details class="panel" id="conn" open>
+        <summary>Sambungan</summary>
+        <div class="form">
+          <div>
+            <label for="device">ID perangkat</label
+            ><input
+              type="text"
+              id="device"
+              value="k27-mf4228"
+              autocomplete="off"
+            />
+          </div>
+          <div>
+            <label for="user">Username dashboard</label
+            ><input type="text" id="user" autocomplete="username" />
+          </div>
+          <div>
+            <label for="pass">Password dashboard</label
+            ><input type="password" id="pass" autocomplete="current-password" />
+          </div>
+          <div>
+            <label for="pin">PIN perintah</label
+            ><input
+              type="password"
+              id="pin"
+              autocomplete="off"
+              inputmode="numeric"
+            />
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn" id="btnConnect" type="button">Sambungkan</button>
+          <button class="btn ghost" id="btnDisconnect" type="button" disabled>
+            Putuskan
+          </button>
+          <label style="margin: 0; font-weight: 500"
+            ><input type="checkbox" id="remember" /> Ingat di browser ini</label
+          >
+        </div>
+        <p class="hint">Jangan centang "Ingat" di perangkat bersama.</p>
+      </details>
+
+      <div class="grid">
+        <section class="panel" aria-labelledby="hRpm">
+          <h2 id="hRpm">Kecepatan mesin</h2>
+          <svg
+            class="gauge"
+            id="gauge"
+            viewBox="0 0 300 260"
+            role="img"
+            aria-label="Pengukur kecepatan mesin"
+          ></svg>
+          <div class="state">
+            <b id="engine">Menunggu data</b>
+            <p id="engineSub">Sambungkan ke server untuk mulai.</p>
+          </div>
+          <div class="chips" id="flags"></div>
+        </section>
+
+        <section class="panel" aria-labelledby="hCtl">
+          <h2 id="hCtl">Kontrol remote</h2>
+          <div class="cmds">
+            <button class="btn start" data-cmd="start" disabled>Start</button>
+            <button class="btn stop" data-cmd="stop" disabled>Stop</button>
+            <button class="btn" data-cmd="reset" disabled>Reset ke AUTO</button>
+          </div>
+          <p class="hint">
+            Reset me-reboot panel. Mode AUTO dikirim otomatis sekitar 35 detik
+            kemudian.
+          </p>
+          <div class="sp">
+            <div class="sprow">
+              <button class="btn" id="dn" disabled aria-label="Kurangi 20 rpm">
+                − 20
+              </button>
+              <div class="spval"><b id="sp">–</b><span>rpm (target)</span></div>
+              <button class="btn" id="up" disabled aria-label="Tambah 20 rpm">
+                + 20
+              </button>
+            </div>
+            <p class="msg">
+              <span id="msg">–</span> Batas <b id="lim">700–1500</b> rpm, diatur
+              di firmware.
+            </p>
+          </div>
+        </section>
+      </div>
+
+      <div class="stack">
+        <section class="panel">
+          <h2>Data mesin</h2>
+          <div class="params" id="params"></div>
+        </section>
+        <div class="two">
+          <section class="panel fault">
+            <h2>Status dan kode gangguan (reg 40061)</h2>
+            <b id="fc">–</b>
+            <p id="fm">Menunggu data</p>
+          </section>
+          <section class="panel">
+            <h2>Riwayat perintah</h2>
+            <ul class="log" id="log">
+              <li>Belum ada aktivitas.</li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <dialog id="dlg">
+      <p id="dlgText" style="margin-top: 0"></p>
+      <div class="row" style="margin-top: 8px">
+        <button class="btn" id="dlgYes" type="button">Kirim</button>
+        <button class="btn ghost" id="dlgNo" type="button">Batal</button>
+      </div>
+    </dialog>
+
+    <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
+    <script>
+      /* ---------- tetap (tidak diisi di form) ---------- */
+      const BROKER_HOST = "k6f661c1.ala.asia-southeast1.emqxsl.com";
+      const BROKER_WSS_PORT = 8084;
+      const RPM_SCALE_MAX = 2000,
+        RUNNING_RPM = 300;
+
+      const $ = (id) => document.getElementById(id);
+      const FAULT = {
+        0: "Normal operation",
+        1: "Low oil pressure",
+        2: "High engine temp",
+        3: "Auxiliary 3",
+        4: "Loss of flow switch",
+        5: "Alternator failure",
+        6: "Coolant level low",
+        7: "Overspeed",
+        8: "Underspeed",
+        9: "Bad or no RPM",
+        10: "Failed crank attempts",
+        11: "Aux. input 1",
+        12: "Aux. input 2",
+        13: "Aux. input 3",
+        14: "Low fuel level",
+        17: "Low pump pressure",
+        18: "Max pump pressure",
+        19: "CAN bus failure",
+        20: "Pump temperature",
+        21: "Internal protection",
+        23: "Check ECU codes",
+        24: "Timer complete",
+        25: "Normal shutdown (tombol stop)",
+        29: "Low flow",
+        30: "High flow",
+        31: "Stagnant timer",
+        32: "Normal shutdown (remote/auto)",
+      };
+      const regs = new Array(61).fill(0),
+        g = (n) => regs[n - 40001];
+      // [nama, alamat tampil, fungsi nilai, satuan, desimal, register untuk cek n/a (0 = tanpa cek)]
+      const PARAMS = [
+        ["Battery Voltage", "40013", () => g(40013) * 0.05, "V", 1, 40013],
+        ["Engine Load", "40001", () => g(40001), "%", 0, 40001],
+        [
+          "Engine Hours",
+          "40003-04",
+          () => (g(40004) * 65536 + g(40003)) * 0.05,
+          "jam",
+          1,
+          0,
+        ],
+        ["Coolant Temperature", "40005", () => g(40005) - 40, "°C", 0, 40005],
+        [
+          "Oil Temperature",
+          "40006",
+          () => g(40006) * 0.03125 - 273,
+          "°C",
+          1,
+          40006,
+        ],
+        ["Oil Pressure", "40007", () => g(40007) * 4, "kPa", 0, 40007],
+        ["Coolant Level", "40008", () => g(40008) * 0.4, "%", 0, 40008],
+        ["Fuel Level", "40045", () => g(40045), "%", 0, 40045],
+        ["Fuel Consumption", "40009", () => g(40009) * 0.05, "L/jam", 1, 40009],
+        ["Boost Pressure", "40010", () => g(40010) * 2, "kPa", 0, 40010],
+        [
+          "Engine Pressure",
+          "40025",
+          () => g(40025) * 2.91 * 6.895,
+          "kPa",
+          0,
+          40025,
+        ],
+      ];
+      $("params").innerHTML = PARAMS.map(
+        (p, i) =>
+          `<div class="par"><h3>${p[0]}</h3><b id="p${i}">–</b><small>${p[3]}</small><span>reg ${p[1]}</span></div>`,
+      ).join("");
+
+      /* ---------- gauge ---------- */
+      const CX = 150,
+        CY = 150,
+        R = 110,
+        A0 = 135,
+        SWEEP = 270;
+      const pt = (a) => [
+        CX + R * Math.cos((a * Math.PI) / 180),
+        CY + R * Math.sin((a * Math.PI) / 180),
+      ];
+      function arc(from, to) {
+        const [x0, y0] = pt(A0 + (SWEEP * from) / RPM_SCALE_MAX),
+          [x1, y1] = pt(A0 + (SWEEP * to) / RPM_SCALE_MAX);
+        const large = ((to - from) / RPM_SCALE_MAX) * SWEEP > 180 ? 1 : 0;
+        return `M${x0.toFixed(1)} ${y0.toFixed(1)}A${R} ${R} 0 ${large} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+      }
+      function drawGauge(rpm, min, max) {
+        let ticks = "";
+        for (let v = 0; v <= RPM_SCALE_MAX; v += 250) {
+          const a = ((A0 + (SWEEP * v) / RPM_SCALE_MAX) * Math.PI) / 180;
+          const x1 = CX + (R - 14) * Math.cos(a),
+            y1 = CY + (R - 14) * Math.sin(a);
+          const x2 = CX + (R + 8) * Math.cos(a),
+            y2 = CY + (R + 8) * Math.sin(a);
+          const tx = CX + (R + 24) * Math.cos(a),
+            ty = CY + (R + 24) * Math.sin(a) + 4;
+          ticks += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#18262b" stroke-width="2"/>`;
+          if (v % 500 === 0)
+            ticks += `<text x="${tx}" y="${ty}" text-anchor="middle" font-size="13" fill="#5b6b6e">${v}</text>`;
+        }
+        const band =
+          min && max
+            ? `<path d="${arc(min, max)}" fill="none" stroke="#0e6a68" stroke-opacity=".28" stroke-width="22"/>`
+            : "";
+        const c = Math.max(0, Math.min(RPM_SCALE_MAX, rpm)),
+          angle = A0 + (SWEEP * c) / RPM_SCALE_MAX;
+        $("gauge").innerHTML = `
+    <path d="${arc(0, RPM_SCALE_MAX)}" fill="none" stroke="#d3d9d4" stroke-width="22"/>
+    ${band}
+    ${c > 0 ? `<path d="${arc(0, c)}" fill="none" stroke="#0e6a68" stroke-width="6"/>` : ""}
+    ${ticks}
+    <g class="needle" style="transform-origin:${CX}px ${CY}px;transform:rotate(${angle}deg)">
+      <line x1="${CX}" y1="${CY}" x2="${CX + R - 22}" y2="${CY}" stroke="#18262b" stroke-width="4" stroke-linecap="round"/>
+    </g>
+    <circle cx="${CX}" cy="${CY}" r="9" fill="#18262b"/>
+    <text x="${CX}" y="${CY + 62}" text-anchor="middle" font-size="52" font-weight="700" fill="#18262b">${Math.round(rpm)}</text>
+    <text x="${CX}" y="${CY + 84}" text-anchor="middle" font-size="16" fill="#5b6b6e">rpm</text>`;
+      }
+      drawGauge(0);
+
+      /* ---------- ui ---------- */
+      function pill(id, cls, text) {
+        const e = $(id);
+        e.className = "pill " + cls;
+        e.lastChild.nodeValue = text;
+      }
+      const msg = (t) => ($("msg").textContent = t);
+      function log(m) {
+        const ul = $("log");
+        if (
+          ul.firstChild &&
+          ul.firstChild.textContent === "Belum ada aktivitas."
+        )
+          ul.innerHTML = "";
+        const li = document.createElement("li"),
+          t = document.createElement("time");
+        t.textContent = new Date().toLocaleTimeString("id-ID");
+        li.append(t, document.createTextNode(m));
+        ul.prepend(li);
+        while (ul.children.length > 50) ul.lastChild.remove();
+      }
+      function setControls(on) {
+        document
+          .querySelectorAll("[data-cmd],#up,#dn")
+          .forEach((b) => (b.disabled = !on));
+      }
+
+      let client = null,
+        dev = "",
+        base = "",
+        lim = { min: 700, max: 1500 },
+        tgt = null,
+        tgtT = 0,
+        seen = 0,
+        panelOk = null,
+        tm;
+
+      function upd() {
+        PARAMS.forEach((p, i) => {
+          const raw = p[5] ? g(p[5]) : 0;
+          $("p" + i).textContent =
+            raw === 0xffff || raw === 0xff ? "n/a" : p[2]().toFixed(p[4]);
+        });
+        const rpm = g(40002) * 0.125,
+          st = g(40022),
+          run = !!(st & 2) || rpm >= RUNNING_RPM;
+        drawGauge(rpm, lim.min, lim.max);
+        $("engine").textContent = run ? "Mesin berjalan" : "Mesin berhenti";
+        $("engineSub").textContent = "Diperbarui tiap 2 detik.";
+        if (
+          run &&
+          tgt != null &&
+          (Date.now() - tgtT < 3000 ||
+            (Math.abs(rpm - tgt) > 10 && Date.now() - tgtT < 10000))
+        )
+          $("sp").textContent = tgt;
+        else if (run) {
+          tgt = null;
+          $("sp").textContent = Math.round(rpm);
+        } else {
+          tgt = null;
+          $("sp").textContent = "–";
+        }
+        const fl = [
+          ["Auto", 1],
+          ["Running", 2],
+          ["Warm up", 4],
+          ["Line fill", 8],
+          ["Cool down", 16],
+          ["Common alarm", 32],
+        ];
+        $("flags").innerHTML =
+          fl
+            .map(
+              (f) =>
+                `<span class="chip ${st & f[1] ? (f[1] === 32 ? "al" : "on") : ""}">${f[0]}</span>`,
+            )
+            .join("") +
+          `<span class="chip ${g(40050) & 1 ? "on" : ""}">Start input aktif</span><span class="chip ${g(40051) & 1 ? "al" : ""}">Stop input aktif</span>`;
+        const fc = g(40061);
+        $("fc").textContent = fc;
+        $("fc").style.color = fc && fc < 24 ? "var(--red)" : "";
+        $("fm").textContent = FAULT[fc] || "Kode tidak dikenal";
+      }
+
+      /* ---------- koneksi ---------- */
+      const FIELDS = ["device", "user", "pass", "pin"];
+      (function () {
+        try {
+          const s = JSON.parse(localStorage.getItem("k27dash") || "null");
+          if (s) {
+            FIELDS.forEach((f) => {
+              if (s[f] != null) $(f).value = s[f];
+            });
+            $("remember").checked = true;
+          }
+        } catch (e) {}
+      })();
+
+      function connect() {
+        dev = $("device").value.trim();
+        if (!dev) {
+          alert("Isi ID perangkat.");
+          return;
+        }
+        try {
+          if ($("remember").checked) {
+            const o = {};
+            FIELDS.forEach((f) => (o[f] = $(f).value));
+            localStorage.setItem("k27dash", JSON.stringify(o));
+          } else localStorage.removeItem("k27dash");
+        } catch (e) {}
+        base = `k27/${dev}/`;
+        if (client) client.end(true);
+        pill("pBroker", "warn", "Server: menyambung");
+        client = mqtt.connect(`wss://${BROKER_HOST}:${BROKER_WSS_PORT}/mqtt`, {
+          username: $("user").value,
+          password: $("pass").value,
+          clientId: "web-" + Math.random().toString(16).slice(2, 10),
+          clean: true,
+          reconnectPeriod: 3000,
+          connectTimeout: 10000,
+        });
+        client.on("connect", () => {
+          pill("pBroker", "ok", "Server: tersambung");
+          $("devline").textContent = "Perangkat " + dev;
+          $("btnConnect").disabled = true;
+          $("btnDisconnect").disabled = false;
+          $("conn").open = false;
+          setControls(true);
+          // sengaja tidak subscribe ke topik cmd (berisi PIN)
+          client.subscribe(
+            [base + "state", base + "status", base + "ack"],
+            (err) => {
+              if (err) log("Gagal subscribe: " + err.message);
+            },
+          );
+          log("Tersambung ke server.");
+        });
+        client.on("reconnect", () =>
+          pill("pBroker", "warn", "Server: menyambung ulang"),
+        );
+        client.on("close", () => {
+          pill("pBroker", "bad", "Server: terputus");
+          setControls(false);
+        });
+        client.on("error", (e) => log("Error server: " + e.message));
+        client.on("message", (t, m) => {
+          const k = t.slice(base.length),
+            s = m.toString();
+          if (k === "state") {
+            try {
+              const o = JSON.parse(s);
+              panelOk = !!o.ok;
+              pill(
+                "pPanel",
+                o.ok ? "ok" : "bad",
+                o.ok ? "Panel K27: terbaca" : "Panel K27: tidak menjawab",
+              );
+              lim = { min: o.min || lim.min, max: o.max || lim.max };
+              $("lim").textContent = lim.min + "–" + lim.max;
+              seen = Date.now();
+              if (o.ok) {
+                o.r.forEach((v, i) => (regs[i] = v));
+                upd();
+              } else {
+                $("engine").textContent = "Data panel tidak tersedia";
+                $("engineSub").textContent =
+                  "ESP32 tidak mendapat balasan Modbus. Cek kabel RS485, A/B, baud rate, dan slave ID.";
+              }
+            } catch (e) {
+              log("Data state tidak valid.");
+            }
+          } else if (k === "status") {
+            pill("pDevice", s === "online" ? "ok" : "bad", "ESP32: " + s);
+          } else if (k === "ack") {
+            log("ESP32: " + s);
+            msg(s);
+          }
+        });
+      }
+      function disconnect() {
+        if (client) client.end(true);
+        client = null;
+        setControls(false);
+        $("btnConnect").disabled = false;
+        $("btnDisconnect").disabled = true;
+        pill("pBroker", "", "Server: terputus");
+      }
+      $("btnConnect").onclick = connect;
+      $("btnDisconnect").onclick = disconnect;
+
+      setInterval(() => {
+        if (!seen) return;
+        const s = Math.round((Date.now() - seen) / 1000);
+        pill("pAge", s > 10 ? "bad" : "ok", "Data: " + s + " dtk lalu");
+      }, 1000);
+
+      /* ---------- perintah ---------- */
+      const LABEL = {
+        start: "Start mesin",
+        stop: "Stop mesin",
+        reset: "Reset ke AUTO",
+      };
+      function send(a, v) {
+        const pin = $("pin").value;
+        if (!client || !client.connected) {
+          msg("Belum tersambung ke server.");
+          return;
+        }
+        if (!pin) {
+          $("conn").open = true;
+          $("pin").focus();
+          msg("Isi PIN perintah dulu.");
+          log("Perintah batal: PIN kosong.");
+          return;
+        }
+        const m = { pin, a };
+        if (v != null) m.v = v;
+        client.publish(base + "cmd", JSON.stringify(m), { qos: 1 }, (err) => {
+          log(
+            err
+              ? "Gagal mengirim: " + err.message
+              : "Dikirim: " + (a === "rpm" ? "atur " + v + " rpm" : LABEL[a]),
+          );
+        });
+      }
+      function confirmThen(text, fn) {
+        $("dlgText").textContent = text;
+        $("dlg").showModal();
+        $("dlgYes").onclick = () => {
+          $("dlg").close();
+          fn();
+        };
+        $("dlgNo").onclick = () => $("dlg").close();
+      }
+      document.querySelectorAll("[data-cmd]").forEach(
+        (b) =>
+          (b.onclick = () => {
+            const a = b.dataset.cmd;
+            const txt = {
+              start: "Start mesin sekarang?",
+              stop: "Stop mesin sekarang?",
+              reset: "Reset panel lalu AUTO? Panel reboot sekitar 35 detik.",
+            }[a];
+            confirmThen(txt, () => send(a));
+          }),
+      );
+      function setSp(d) {
+        const rpm = g(40002) * 0.125;
+        if (rpm < RUNNING_RPM) {
+          msg("Mesin belum berjalan.");
+          return;
+        }
+        const b0 = tgt != null ? tgt : Math.round(rpm);
+        let n = b0 + d;
+        if (n < lim.min) {
+          if (b0 > lim.min) n = lim.min;
+          else {
+            msg("Sudah di batas minimum (" + lim.min + ").");
+            return;
+          }
+        }
+        if (n > lim.max) {
+          if (b0 < lim.max) n = lim.max;
+          else {
+            msg("Sudah di batas maksimum (" + lim.max + ").");
+            return;
+          }
+        }
+        tgt = n;
+        tgtT = Date.now();
+        $("sp").textContent = n;
+        msg("Mengirim " + n + " rpm…");
+        clearTimeout(tm);
+        tm = setTimeout(() => send("rpm", n), 300);
+      }
+      $("up").onclick = () => setSp(20);
+      $("dn").onclick = () => setSp(-20);
+    </script>
+  </body>
+</html>
